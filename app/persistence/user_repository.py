@@ -39,11 +39,11 @@ class UserRepository:
         user = self.get_by_id(user_id)
         if not user:
             raise ValueError("Utilisateur introuvable.")
-        
+
         for key, value in data.items():
             if hasattr(user, key) and key != "id":
                 setattr(user, key, value)
-        
+
         db.session.commit()
         return user
 
@@ -52,6 +52,10 @@ class UserRepository:
         user = self.get_by_id(user_id)
         if not user:
             raise ValueError("Utilisateur introuvable.")
-        
+
         db.session.delete(user)
         db.session.commit()
+
+    def get_all(self):
+        """Retourne la liste de tous les utilisateurs."""
+        return db.session.query(self.model).all()

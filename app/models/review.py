@@ -31,9 +31,13 @@ class Review(BaseModel, db.Model):
             raise ValueError("Text must be a non-empty string")
         if not isinstance(self.rating, int) or not (1 <= self.rating <= 5):
             raise ValueError("Rating must be an integer between 1 and 5")
-        if self.place and not isinstance(self.place, Place):
+        if not self.place:
+            raise ValueError("Review must be associated with a valid Place")
+        if not isinstance(self.place, Place):
             raise ValueError("place must be an instance of Place")
-        if self.user and not isinstance(self.user, User):
+        if not self.user:
+            raise ValueError("Review must be associated with a valid User")
+        if not isinstance(self.user, User):
             raise ValueError("user must be an instance of User")
 
     def __repr__(self):

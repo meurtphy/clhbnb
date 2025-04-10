@@ -33,7 +33,7 @@ class ReviewList(Resource):
         try:
             # Validate that the user is not reviewing their own place
             place = facade.get_place(review_data['place_id'])
-            if place.owner.id == current_user['id']:
+            if int(place.owner.id) == int(current_user['id']):
                 return {'error': "You cannot review your own place"}, 403
 
             # Validate that the user has not already reviewed this place

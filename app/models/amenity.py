@@ -16,7 +16,7 @@ class Amenity(BaseModel, db.Model):
     name = Column(String(50), nullable=False)
 
     # ✅ Relation Many-to-Many avec Place
-    places = relationship('Place', secondary=place_amenity_association, back_populates='amenities', lazy=True)
+    places = relationship('Place', secondary='place_amenity_association', back_populates='amenities', lazy=True)
 
     def __init__(self, name):
         super().__init__()

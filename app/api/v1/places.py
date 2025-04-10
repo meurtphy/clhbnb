@@ -13,7 +13,6 @@ place_model = api.model('Place', {
     'price': fields.Float(required=True, description='Price per night'),
     'latitude': fields.Float(required=True, description='Latitude of the place'),
     'longitude': fields.Float(required=True, description='Longitude of the place'),
-    'owner_id': fields.String(required=True, description='ID of the owner'),
     'amenities': fields.List(fields.String, required=True, description="List of amenities ID's")
 })
 
@@ -37,11 +36,14 @@ class PlaceList(Resource):
     def post(self):
         """Register a new place"""
         current_user = get_jwt_identity()  # Get the authenticated user's identity
+        claims = get_jwt()  # Retrieve all JWT claims
+        is_admin = claims.get('is_admin', False)  # Check if user is admin
         place_data = api.payload
 
         try:
-            # Set the owner_id to the authenticated user's ID
-            place_data['owner_id'] = current_user['id']
+            # Set the owner_id to the authenticated user's ID only if not admin
+            if not is_admin:
+                place_data['owner_id'] = current_user['id']
 
             # Create place using the facade
             new_place = facade.create_place(place_data)
@@ -112,7 +114,7 @@ class PlaceResource(Resource):
             place = facade.get_place(place_id)
             if not place:
                 return {'error': "Place not found"}, 404
-            
+
             # Ownership check: Admins can bypass this restriction
             if not is_admin and str(place.owner.id) != current_user['id']:
                 return {'error': "Unauthorized action"}, 403
@@ -122,7 +124,7 @@ class PlaceResource(Resource):
 
             # Update the place
             updated_place = facade.update_place(place_id, update_data)
-            
+
             return {
                 'id': updated_place.id,
                 'title': updated_place.title,
@@ -156,7 +158,7 @@ class PlaceResource(Resource):
             place = facade.get_place(place_id)
             if not place:
                 return {'error': "Place not found"}, 404
-            
+
             # Ownership check: Admins can bypass this restriction
             if not is_admin and str(place.owner.id) != current_user['id']:
                 return {'error': "Unauthorized action"}, 403
@@ -165,9 +167,9 @@ class PlaceResource(Resource):
 
             # Delete the place
             facade.delete_place(place_id)
-            
+
             return {'message': "Place deleted successfully"}, 200
-        
+
         except Exception as e:
             logger.error(f"Unexpected error while deleting a place: {str(e)}")
             return {'error': "Internal server error"}, 500

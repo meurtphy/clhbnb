@@ -1,54 +1,103 @@
-from flask import Flask
+from flask import Flask, jsonify, render_template
+import os
 from flask_restx import Api
-from app.persistence.repository import SQLAlchemyRepository  # Import the new repository class
-from app.extensions import db, bcrypt, jwt  # Use extensions for database and authentication
-from app.api.v1.users import api as users_ns
-from app.api.v1.amenities import api as amenities_ns
-from app.api.v1.places import api as places_ns
-from app.api.v1.reviews import api as reviews_ns
-from app.api.v1.auth import api as auth_ns
-from app.api.v1.protector import api as protected_ns
-
+from app.extensions import db, bcrypt, jwt
+from datetime import timedelta
+from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
+from flask_cors import CORS  # 👈 Import ajouté ici
+from app.models import User, Place, Review, Amenity
 
 def create_app(config_class="config.DevelopmentConfig"):
-    """Create and configure the Flask application"""
-    app = Flask(__name__)
-    
-    # Load the configuration
+    """
+    Crée et configure l'application Flask.
+    Args:
+        config_class (str): Chemin vers la classe de configuration à utiliser.
+            Par défaut, "config.DevelopmentConfig".
+    Returns:
+        Flask: L'application Flask configurée.
+    """
+    # Configuration absolue du dossier des templates (important pour que render_template() trouve les fichiers)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+    app = Flask(__name__, template_folder=base_dir)
     app.config.from_object(config_class)
 
-    # Secret key for JWT (already present in your code)
-    app.config['JWT_SECRET_KEY'] = 'your-secret-key'
-    
-    # Initialize extensions
+    CORS(app)  # Active les CORS pour toutes les routes
+
+    # Configuration spécifique JWT
+    app.config['JWT_SECRET_KEY'] = app.config.get('SECRET_KEY', 'fallback-secret-key')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+
+    # Initialisation des extensions
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    migrate = Migrate(app, db)
 
-    with app.app_context():
-        # Database tables will be created later (next task)
-        db.create_all()
+    # Configuration du gestionnaire JWT
+    jwt_manager = JWTManager(app)
 
-    # Initialize Flask-RESTX API
+    @jwt_manager.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({"message": "Token has expired"}), 401
+
+    @jwt_manager.invalid_token_loader
+    def invalid_token_callback(error):
+        return jsonify({"message": "Invalid token"}), 401
+
     api = Api(
-        app, 
-        version='1.0', 
-        title='HBnB API', 
-        description='HBnB Application API', 
-        doc='/api/v1/'
+        app,
+        version='1.0',
+        title='HBNB API',
+        description='HBNB Application API',
+        doc='/api/v1/',
+        authorizations={
+            'Bearer': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+                'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
+            }
+        },
+        security='Bearer'
     )
 
-    # Register the namespaces (already present in your code)
-    api.add_namespace(users_ns, path='/api/v1/users')
-    api.add_namespace(amenities_ns, path='/api/v1/amenities')
-    api.add_namespace(places_ns, path='/api/v1/places')
-    api.add_namespace(reviews_ns, path='/api/v1/reviews')
-    api.add_namespace(auth_ns, path='/api/v1/auth')
-    api.add_namespace(protected_ns, path='/api/v1/protector')
+    # Import des namespaces
+    from .api.v1.users import api as users_ns
+    from .api.v1.auth import api as auth_ns
+    from .api.v1.amenities import api as amenities_ns
+    from .api.v1.places import api as places_ns
+    from .api.v1.reviews import api as reviews_ns
 
-    # Initialize JWT again (already present in your code)
-    jwt.init_app(app)
+    # Register namespaces
+    api.add_namespace(users_ns)
+    api.add_namespace(auth_ns)
+    api.add_namespace(amenities_ns)
+    api.add_namespace(places_ns)
+    api.add_namespace(reviews_ns)
 
+    # Routes pour les pages HTML
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
+    @app.route('/login')
+    def login():
+        return render_template('login.html')
+
+    # Initialisation de l'application : création de la base et de l'admin si nécessaire
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(email="admin@hbnb.com").first():
+            admin = User(
+                first_name="Admin",
+                last_name="HBNB",
+                email="admin@hbnb.com",
+                password="admin123",  # Le mot de passe est passé en clair pour être hashé automatiquement
+                is_admin=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Utilisateur admin créé avec succès")
 
     return app

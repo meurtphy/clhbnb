@@ -20,7 +20,7 @@ class HBnBFacade:
 
     def __init__(self):
         if not self._initialized:
-            # Use UserRepository for User and SQLAlchemyRepository for others
+            # Utilise UserRepository pour les Users et SQLAlchemyRepository pour les autres modèles
             self.user_repo = UserRepository()
             self.place_repo = SQLAlchemyRepository(Place)
             self.amenity_repo = SQLAlchemyRepository(Amenity)
@@ -97,7 +97,7 @@ class HBnBFacade:
     def create_place(self, place_data):
         logger.debug(f"Attempting to create place with data: {place_data}")
 
-        # Extract owner_id and amenities from place_data
+        # Extraire owner_id et amenities
         owner_id = place_data.pop('owner_id', None)
         amenities_ids = place_data.pop('amenities', [])
 
@@ -109,16 +109,17 @@ class HBnBFacade:
             raise ValueError(f"User with id {owner_id} not found")
 
         try:
-            # Create place with core data
+            # Création de l'objet Place en passant les données centrales
             place = Place(
                 **place_data,
                 owner=owner
             )
 
-            # Add amenities after place creation
+            # Ajout des amenities à partir des IDs
             for amenity_id in amenities_ids:
                 amenity = self.amenity_repo.get(amenity_id)
                 if amenity:
+                    # Utilise la méthode add_amenity() du modèle Place
                     place.add_amenity(amenity)
                 else:
                     logger.warning(f"Amenity {amenity_id} not found")
@@ -144,7 +145,7 @@ class HBnBFacade:
             return None
 
         try:
-            # Validate core attributes if they're being updated
+            # Validation et mise à jour des attributs
             if 'title' in place_data:
                 if len(place_data['title']) > 100:
                     raise ValueError("Title must be 100 characters or less")
@@ -176,7 +177,7 @@ class HBnBFacade:
                     raise ValueError(f"User with id {place_data['owner_id']} not found")
 
             if 'amenities' in place_data:
-                place.amenities = []  # Reset amenities
+                place.amenities = []  # Réinitialise la liste des amenities
                 for amenity_id in place_data['amenities']:
                     amenity = self.amenity_repo.get(amenity_id)
                     if amenity:
@@ -188,6 +189,15 @@ class HBnBFacade:
         except Exception as e:
             logger.error(f"Error updating place: {str(e)}")
             raise ValueError(str(e))
+
+    def delete_place(self, place_id):
+        """Delete a place by its ID"""
+        place = self.place_repo.get(place_id)
+        if not place:
+            raise ValueError("Place not found")
+        self.place_repo.delete(place_id)
+        logger.debug(f"Place with ID {place_id} deleted")
+        return True
 
     def create_review(self, review_data):
         if not (1 <= review_data['rating'] <= 5):
@@ -240,3 +250,10 @@ class HBnBFacade:
         import re
         email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         return re.match(email_regex, email) is not None
+
+    def has_already_reviewed(self, user_id, place_id):
+        """
+        Check if a user has already left a review for a given place.
+        """
+        reviews = self.get_reviews_by_place(place_id)
+        return any(review.user.id == int(user_id) for review in reviews)
