@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HBNB - Add Review</title>
-  <link rel="stylesheet" href="/static/css/styles.css">
-  <link rel="icon" href="/static/images/icon.png">
+  <link rel="stylesheet" href="/static/css/styles.css"/>
+  <link rel="icon" href="/static/images/icon.png"/>
 </head>
 <body>
   <!-- Header with logo and login button -->
@@ -24,13 +24,13 @@
   <main>
     <section class="add-review">
       <h1>Add a Review</h1>
-      <!-- Afficher le nom du lieu dynamiquement via JS -->
-      <p class="place-name">[Place Name]</p>
+      <!-- Affiche dynamiquement le nom du lieu si nécessaire -->
+      <p id="place-name" class="place-name">[Place Name]</p>
 
       <form class="form" id="review-form">
         <div class="form-group">
-          <label for="rating">Rating:</label>
-          <select id="rating" name="rating" required>
+          <label for="review-rating">Rating:</label>
+          <select id="review-rating" name="rating" required>
             <option value="5">5 Stars</option>
             <option value="4">4 Stars</option>
             <option value="3">3 Stars</option>
@@ -52,9 +52,97 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer>
     <p>&copy; 2025 HBNB - All rights reserved</p>
   </footer>
+
+  <!-- Authentification + Submit Review Script -->
+  <script>
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    function getPlaceIdFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    function checkAuthOrRedirect() {
+      const token = getCookie('token');
+      if (!token) {
+        window.location.href = 'login.html';
+      }
+      return token;
+    }
+
+    async function submitReview(token, placeId, text, rating) {
+      const response = await fetch(`http://localhost:5000/api/reviews/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          text: text,
+          rating: rating,
+          place_id: parseInt(placeId)
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Erreur API');
+      }
+
+      return response.json();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const reviewForm = document.getElementById('review-form');
+      if (reviewForm) {
+        const token = checkAuthOrRedirect();
+        const placeId = getPlaceIdFromURL();
+
+        const nameEl = document.querySelector('.place-name');
+        if (nameEl && token && placeId) {
+          fetch(`http://localhost:5000/places/${placeId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          .then(res => res.json())
+          .then(place => {
+            nameEl.textContent = place.title || '[Unknown Place]';
+          })
+          .catch(err => {
+            console.error('Erreur récupération nom du lieu:', err);
+            nameEl.textContent = '[Erreur]';
+          });
+        }
+
+        reviewForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+
+          const reviewText = document.getElementById('review-text').value.trim();
+          const reviewRating = parseInt(document.getElementById('review-rating').value);
+
+          if (!reviewText || isNaN(reviewRating) || reviewRating < 1 || reviewRating > 5) {
+            alert("Merci de remplir correctement tous les champs.");
+            return;
+          }
+
+          try {
+            await submitReview(token, placeId, reviewText, reviewRating);
+            alert("✅ Avis envoyé !");
+            window.location.href = `place.html?id=${placeId}`;
+          } catch (err) {
+            console.error("Erreur lors de l'envoi de l'avis:", err);
+            alert("❌ Échec de l'envoi de l'avis.");
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

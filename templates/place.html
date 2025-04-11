@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HBNB - Place Details</title>
-  <link rel="stylesheet" href="/static/css/styles.css">
-  <link rel="icon" href="/static/images/icon.png">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="icon" href="/static/images/icon.png" />
 </head>
 <body>
-  <!-- Header with logo and login button -->
+  <!-- Header -->
   <header>
     <div class="logo-container">
-      <img src="/static/images/logo.png" alt="HBNB Logo" class="logo">
+      <img src="/static/images/logo.png" alt="HBNB Logo" class="logo" />
     </div>
     <nav>
       <ul>
@@ -21,85 +21,58 @@
     </nav>
   </header>
 
-  <main>
-    <!-- Place details section -->
-    <section class="place-details" id="place-details">
-      <div class="place-header">
+  <!-- Main Content -->
+  <main class="main-container">
+    <section id="place-details" class="place-details">
+
+      <!-- Title + location -->
+      <div class="place-title-block">
         <h1 id="place-title">[Place Title]</h1>
-        <p class="location" id="place-location">[Location]</p>
+        <p id="place-location" class="location">[Location]</p>
       </div>
 
-      <div class="place-gallery">
-        <img id="place-image" src="/static/images/place2.jpg" alt="[Place Image]" class="main-image">
-      </div>
-
-      <div class="place-info">
+      <!-- Image & Host side by side -->
+      <div class="top-info">
+        <div class="image-gallery">
+          <img id="place-image" src="/static/images/place2.jpg" alt="[Place Image]" class="main-image" />
+        </div>
         <div class="host-info">
-          <h3>Hosted by <span id="host-name">[Host Name]</span></h3>
-          <img id="host-image" src="/static/images/host.jpg" alt="Host [Name]" class="host-image">
-        </div>
-
-        <div class="price-info">
-          <h3 id="place-price">$[Price] per night</h3>
-          <p id="place-capacity">[Guest capacity · Bedrooms · Bathrooms]</p>
-        </div>
-
-        <div class="description">
-          <h3>About this place</h3>
-          <p id="place-description">[Description of the place...]</p>
-        </div>
-
-        <div class="amenities">
-          <h3>Amenities</h3>
-          <ul id="place-amenities">
-            <li>Wi-Fi</li>
-            <li>Fully equipped kitchen</li>
-            <li>Beach access</li>
-            <li>Free parking</li>
-            <li>Air conditioning</li>
-          </ul>
+          <img id="host-image" src="/static/images/host.jpg" alt="Host Image" class="host-image" />
+          <h3 class="host-name">Hosted by <span id="host-name">[Host Name]</span></h3>
         </div>
       </div>
 
-      <!-- Reviews section -->
-      <div class="reviews-section">
+      <!-- Price and capacity -->
+      <div class="price-capacity">
+        <h2 id="place-price">$[Price] per night</h2>
+        <p id="place-capacity">[Guests] guests · [Bedrooms] bedrooms · [Bathrooms] bathrooms</p>
+      </div>
+
+      <!-- Description -->
+      <div class="section description">
+        <h3>About this place</h3>
+        <p id="place-description">[Description of the place]</p>
+      </div>
+
+      <!-- Amenities -->
+      <div class="section amenities">
+        <h3>Amenities</h3>
+        <ul id="place-amenities" class="amenities-list">
+          <!-- Filled by JS -->
+        </ul>
+      </div>
+
+      <!-- Reviews -->
+      <div class="section reviews-section">
         <div class="reviews-header">
-          <h2>Reviews</h2>
+          <h3>Reviews</h3>
           <a href="add_review.html" class="add-review-btn" id="add-review-link">Add Review</a>
         </div>
-
         <div class="reviews-container" id="reviews-container">
-          <!-- These reviews below stay as fallback/static previews,
-               but will be replaced by dynamic ones if JS works -->
-          <article class="review-card">
-            <div class="review-header">
-              <img src="/static/images/user1.jpg" alt="John D." class="user-image">
-              <div class="review-meta">
-                <h3>John D.</h3>
-                <div class="rating">★★★★★</div>
-                <p class="review-date">April 2025</p>
-              </div>
-            </div>
-            <p class="review-text">
-              Amazing place with stunning views! The house was clean and had everything we needed.
-            </p>
-          </article>
-
-          <article class="review-card">
-            <div class="review-header">
-              <img src="/static/images/logo.png" alt="HBNB Logo" class="user-image">
-              <div class="review-meta">
-                <h3>Emily W.</h3>
-                <div class="rating">★★★★☆</div>
-                <p class="review-date">March 2025</p>
-              </div>
-            </div>
-            <p class="review-text">
-              We had a great stay here! The location is perfect and the house is beautiful.
-            </p>
-          </article>
+          <p>No reviews yet.</p>
         </div>
       </div>
+
     </section>
   </main>
 
@@ -108,7 +81,7 @@
     <p>&copy; 2025 HBNB - All rights reserved</p>
   </footer>
 
-  <!-- Script de récupération dynamique -->
+  <!-- Script -->
   <script src="/static/js/scripts.js"></script>
 </body>
 </html>
